@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   postgres:
     image: postgres:14
@@ -37,9 +35,39 @@ services:
     working_dir: /app/apps/api
     command: pnpm run start:dev
     volumes:
-      - ../../apps/api:/app/apps/api
+      - ../../apps/api/src:/app/apps/api/src
+      - ../../apps/api/test:/app/apps/api/test
       - ../../packages:/app/packages
-      - /app/node_modules
+
+  web:
+    build:
+      context: ../../
+      dockerfile: apps/web/Dockerfile
+    container_name: nimbuslance_web
+    restart: unless-stopped
+    depends_on:
+      - api
+    env_file:
+      - ../../apps/web/.env
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3000/
+      NODE_ENV: development
+    ports:
+      - "3001:3000"
+    working_dir: /app/apps/web
+    command: pnpm run dev
+    volumes:
+      - ../../apps/web/app:/app/apps/web/app
+      - ../../apps/web/public:/app/apps/web/public
+      - ../../apps/web/next.config.ts:/app/apps/web/next.config.ts
+      - ../../apps/web/eslint.config.mjs:/app/apps/web/eslint.config.mjs
+      - ../../apps/web/tsconfig.json:/app/apps/web/tsconfig.json
+      - ../../apps/web/postcss.config.mjs:/app/apps/web/postcss.config.mjs
+      - ../../packages:/app/packages
 
 volumes:
   postgres_data:
+
+
+
+
