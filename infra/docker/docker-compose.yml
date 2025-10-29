@@ -1,20 +1,45 @@
-version: '3.8'
+version: "3.8"
+
 services:
-  db:
-    image: postgres:15
+  postgres:
+    image: postgres:14
+    container_name: nimbuslance_db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: nimbus
-      POSTGRES_PASSWORD: nimbus_pass
-      POSTGRES_DB: nimbusdb
-    volumes:
-      - db_data:/var/lib/postgresql/data
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: nimbuslance
     ports:
       - "5432:5432"
-  adminer:
-    image: adminer
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ../../
+      dockerfile: apps/api/Dockerfile
+    container_name: nimbuslance_api
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - ../../apps/api/.env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/nimbuslance
     ports:
-      - "8080:8080"
+      - "3000:3000"
+    working_dir: /app/apps/api
+    command: pnpm run start:dev
+    volumes:
+      - ../../apps/api:/app/apps/api
+      - ../../packages:/app/packages
+      - /app/node_modules
+
 volumes:
-  db_data:
+  postgres_data:
