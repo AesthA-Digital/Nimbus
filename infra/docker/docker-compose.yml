@@ -32,12 +32,10 @@ services:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/nimbuslance
     ports:
       - "3000:3000"
-    working_dir: /app/apps/api
-    command: pnpm run start:dev
+    working_dir: /app
+    command: sh -lc "cd /app/packages/db && pnpm prisma generate && pnpm prisma migrate deploy && pnpm --filter api run start:dev"
     volumes:
-      - ../../apps/api/src:/app/apps/api/src
-      - ../../apps/api/test:/app/apps/api/test
-      - ../../packages:/app/packages
+      - ../../:/app
 
   web:
     build:
@@ -67,7 +65,3 @@ services:
 
 volumes:
   postgres_data:
-
-
-
-
